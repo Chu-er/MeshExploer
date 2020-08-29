@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter),  typeof(MeshRenderer))]
-public class CubeRound : MonoBehaviour
+public class SplittingMesh : MonoBehaviour
 {
     public int xSize, ySize, zSize;
     public int Roundness;
@@ -11,7 +11,7 @@ public class CubeRound : MonoBehaviour
     private Mesh mesh;
     private Vector3[] vertices;
     private Vector3[] normals;
-
+    private Color32[] CubeUV;
 
     void Start()
     {
@@ -36,8 +36,8 @@ public class CubeRound : MonoBehaviour
         int vCount = cornerVertices + edgeVertices + faceVertices;
         vertices = new Vector3[vCount];
         normals = new Vector3[vertices.Length];
-        //Debug.Log("顶点数量" + vCount);
-
+        CubeUV = new Color32[vertices.Length];
+            
         int v = 0;
         //赋予前后左右四个面顶点
         for (int y = 0; y <=ySize; y++)
@@ -83,6 +83,7 @@ public class CubeRound : MonoBehaviour
         }
         mesh.vertices = vertices;
         mesh.normals = normals;
+        mesh.colors32 = CubeUV;
     }
 
     /// <summary>
@@ -118,34 +119,57 @@ public class CubeRound : MonoBehaviour
 
         normals[i] = (vertices[i] - inner).normalized;
         vertices[i] = inner + normals[i] * Roundness;
+        CubeUV[i] = new Color32((byte)x, (byte)y, (byte)z,0);
     }
 
 
     IEnumerator GenerateTriangles()
     {
         WaitForSeconds wait = new WaitForSeconds(0.1f);
-        int quads = (xSize * ySize + ySize * zSize + xSize * zSize) * 2;//四边形的总数
-        int[] triangles = new int[quads * 6];//三角形点总数   要共享的
+
+
+        int[] trianglesZ = new int[xSize * ySize * 12];
+        int[] trianglesX = new int[zSize*ySize*12];
+        int[] trianglesY = new int[xSize * zSize * 12];
+
+        int tZ = 0, tX = 0, tY = 0, v = 0;
         int ring = (xSize + zSize) * 2;// 行与行的 顶点偏移量
-        int t = 0 ,v = 0;
 
-        for (int y = 0; y < ySize; y++,v++)
+        for (int y = 0; y < ySize; y++, v++)
         {
-            //绘制一环
-            for (int q = 0; q < ring - 1; q++, v++)
+            for (int q = 0; q < xSize; q++, v++)
             {
-                t = SetQuad(triangles, t, v, v + 1, v + ring, v + ring + 1);
-
+                tZ = SetQuad(trianglesZ, tZ, v, v+1, v+ring, v+ring+1);
             }
-            
-            //每环最后一个单独绘制
-            t = SetQuad(triangles, t, v, v - ring + 1, v + ring, v + 1);
+
+            for (int q = 0; q < zSize; q++, v++)
+            {
+                tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
+            }
+
+            for (int q = 0; q < xSize; q++, v++)
+            {
+                tZ = SetQuad(trianglesZ, tZ, v, v + 1, v + ring, v + ring + 1);
+            }
+
+            for (int q = 0; q < zSize-1; q++, v++)
+            {
+                tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
+            }
+            tX = SetQuad(trianglesX, tX, v, v  -ring +1, v + ring, v + 1);
         }
 
-        t= CreateTopFace(triangles, t, ring);
-        t = CreateBottomFace(triangles, t, ring);
+
+        tY = CreateTopFace(  trianglesY, tY, ring);
+        tY = CreateBottomFace(trianglesY, tY, ring);
+
+        mesh.subMeshCount = 3;
+
+        mesh.SetTriangles(trianglesZ, 0);
+        mesh.SetTriangles(trianglesX, 1);
+        mesh.SetTriangles(trianglesY, 2);
+
         yield return wait;
-        mesh.triangles = triangles;
     }
 
     /// <summary>
@@ -251,15 +275,15 @@ public class CubeRound : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (vertices == null) return;
+        //if (vertices == null) return;
 
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            Gizmos.color = Color.black;
-            Gizmos.DrawSphere( vertices[i] ,0.1f);
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(vertices[i],normals[i]);
-        }
+        //for (int i = 0; i < vertices.Length; i++)
+        //{
+        //    Gizmos.color = Color.black;
+        //    Gizmos.DrawSphere( vertices[i] ,0.1f);
+        //    Gizmos.color = Color.yellow;
+        //    Gizmos.DrawRay(vertices[i],normals[i]);
+        //}
     }
 
 
