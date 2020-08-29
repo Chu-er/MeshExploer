@@ -1,0 +1,42 @@
+
+
+
+
+ private int CreateBottomFace(int[] triangles, int t, int ring)
+    {
+        int v = 1;
+        int vMid = vertices.Length -  (xSize-1)*(zSize-1) ;
+        int vOriginMid = vMid;
+        t = SetQuad(triangles, t, ring - 1, vMid, 0, 1);
+        for (int x = 1; x < xSize-1; x++,vMid++,v++)
+        {
+            t = SetQuad(triangles, t, vMid, vMid+1, v, v+1);
+        }
+        t = SetQuad(triangles, t, vMid, v+2, v, v + 1);
+
+        int vMin = ring - 2;
+        int vMax = v + 2;
+
+        vMid++;
+        for (int z = 1; z < zSize-1; z++,vMid++,vMin--,vMax++, vOriginMid++)
+        {
+            t = SetQuad(triangles, t, vMin, vMid, vMin+1, vOriginMid);
+            for (int x = 1; x < xSize - 1; x++, vOriginMid++,vMid++)
+            {
+                t = SetQuad(triangles, t, vMid, vMid + 1, vOriginMid, vOriginMid + 1);
+            }
+            t = SetQuad(triangles, t, vMid, vMax + 1, vOriginMid, vMax);
+        }
+
+        int vTop = vMin - 1;
+
+        t = SetQuad(triangles, t, vTop + 1, vTop, vTop+2, vOriginMid);
+        for (int x = 1; x < xSize - 1; x++,vTop--, vOriginMid++)
+        {
+
+            t = SetQuad(triangles, t, vTop, vTop - 1, vOriginMid, vOriginMid + 1);
+        }
+
+        t = SetQuad(triangles, t, vTop, vTop - 1, vOriginMid, vTop -2);
+        return t;
+    }
