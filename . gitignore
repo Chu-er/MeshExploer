@@ -14,22 +14,9 @@ obj
 
 _Temp
 
-proj.android-studio/.gradle
 
-proj.android-studio/.idea
-
-proj.android-studio/app/build
-
-proj.android-studio/build
-
-/Exports/
 
 workspace.xml
 
-
-
 Packages.meta
 
-proj.android-studio/app/googlePlay/release
-
-aliyunOssUpload.log
